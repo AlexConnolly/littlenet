@@ -11,5 +11,7 @@ namespace littlenet.Connection.Interfaces
     {
         public void Send(IPacket packet);
         public void OnReceived<T>(Action<T> callback) where T : IPacket;
+
+        public void OnUnsupportedPacket(Action callback);
     }
 }
