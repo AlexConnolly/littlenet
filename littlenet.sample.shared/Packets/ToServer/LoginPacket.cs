@@ -6,22 +6,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace littlenet.Packets.Implementations
+namespace littlenet.sample.shared.Packets.ToServer
 {
-    public class PingPacket : IPacket
+    public class LoginPacket : IPacket
     {
-        public int PacketType => 2;
+        public int PacketType => 101;
 
-        public string Identitiy { get; set; }
+        public string Username { get; set; }
 
         public void Read(IReadableStream stream)
         {
-            Identitiy = stream.ReadString();
+            Username = stream.ReadString();
         }
 
         public void Write(IWriteableStream stream)
         {
-            stream.WriteString(this.Identitiy);
+            stream.WriteString(this.Username);
         }
     }
 }

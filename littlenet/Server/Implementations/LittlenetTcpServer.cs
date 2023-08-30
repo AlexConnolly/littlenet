@@ -1,5 +1,6 @@
 ﻿using littlenet.Connection.Implementations;
 using littlenet.Connection.Interfaces;
+using littlenet.Packets.Interfaces;
 using littlenet.Server.Interfaces;
 using littlenet.Server.Models;
 using littlenet.Stream.Implementations;
@@ -22,9 +23,19 @@ namespace littlenet.Server.Implementations
 
         private CancellationTokenSource _stopToken = new CancellationTokenSource();
 
+        private List<IConnection> connections = new List<IConnection>();
+
         public LittlenetTcpServer(int port)
         {
             this._port = port;
+        }
+
+        public void Broadcast(IPacket packet)
+        {
+            foreach(var connection in connections)
+            {
+                connection.Send(packet);
+            }
         }
 
         public void OnConnected(Action<IConnection> callback)
@@ -50,6 +61,8 @@ namespace littlenet.Server.Implementations
                 {
                     connectionCallback(connection);
                 }
+
+                connections.Add(connection);
             }
         }
 

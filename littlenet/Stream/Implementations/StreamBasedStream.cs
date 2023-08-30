@@ -29,6 +29,9 @@ namespace littlenet.Stream.Implementations
         {
             int length = ReadInt();
 
+            if (length <= 0)
+                return "";
+
             byte[] buffer = new byte[length];
 
             _stream.Read(buffer, 0, length);
