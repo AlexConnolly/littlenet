@@ -39,22 +39,24 @@ namespace littlenet.Connection.Implementations
 
             this._readthread = new Thread(() =>
             {
-                int packetId = this._dataStream.ReadInt();
-
-                if(_packets.ContainsKey(packetId))
+                while(true)
                 {
-                    IPacket instance = (IPacket)Activator.CreateInstance(_packets[packetId].Packet);
 
-                    instance.Read(dataStream);
+                    int packetId = this._dataStream.ReadInt();
 
-                    foreach(var callback in _packets[packetId].Callbacks)
+                    if (_packets.ContainsKey(packetId))
                     {
-                        callback(instance);
+                        IPacket instance = (IPacket)Activator.CreateInstance(_packets[packetId].Packet);
+
+                        instance.Read(dataStream);
+
+                        foreach (var callback in _packets[packetId].Callbacks)
+                        {
+                            callback(instance);
+                        }
                     }
                 }
             });
-
-            this._readthread.Start();
         }
 
         public void OnReceived<T>(Action<T> callback) where T : IPacket
@@ -78,6 +80,12 @@ namespace littlenet.Connection.Implementations
             Action<IPacket> generalCallback = packet => callback((T)packet);
 
             mappedPacket.Callbacks.Add(generalCallback);
+
+            if(this._readthread.ThreadState != ThreadState.Running)
+            {
+                // Only start reading when we have bound a packet
+                this._readthread.Start();
+            }
         }
 
         private int GetPacketTypeFor(Type type)
