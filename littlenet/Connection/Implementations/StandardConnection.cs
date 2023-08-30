@@ -23,6 +23,7 @@ namespace littlenet.Connection.Implementations
         private Thread _readthread;
 
         private Dictionary<int, MappedPacket> _packets = new Dictionary<int, MappedPacket>();
+        private Action _unsupportedPacketCallback;
 
         public static StandardConnection Connect(string ipAddress, int port)
         {
@@ -54,6 +55,10 @@ namespace littlenet.Connection.Implementations
                         {
                             callback(instance);
                         }
+                    } else
+                    {
+                        if (_unsupportedPacketCallback != null)
+                            _unsupportedPacketCallback();
                     }
                 }
             });
@@ -102,6 +107,11 @@ namespace littlenet.Connection.Implementations
         {
             this._dataStream.WriteInt(packet.PacketType);
             packet.Write(this._dataStream);
+        }
+
+        public void OnUnsupportedPacket(Action callback)
+        {
+            this._unsupportedPacketCallback = callback;
         }
     }
 }
