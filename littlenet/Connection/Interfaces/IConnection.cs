@@ -13,5 +13,7 @@ namespace littlenet.Connection.Interfaces
         public void OnReceived<T>(Action<T> callback) where T : IPacket;
 
         public void OnUnsupportedPacket(Action callback);
+
+        public string ConnectionId { get; }
     }
 }

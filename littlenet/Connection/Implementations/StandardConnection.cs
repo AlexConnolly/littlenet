@@ -25,6 +25,9 @@ namespace littlenet.Connection.Implementations
         private Dictionary<int, MappedPacket> _packets = new Dictionary<int, MappedPacket>();
         private Action _unsupportedPacketCallback;
 
+        private string connectionId = Guid.NewGuid().ToString();
+        public string ConnectionId => connectionId;
+
         public static StandardConnection Connect(string ipAddress, int port)
         {
             var tcpClient = new TcpClient();
@@ -42,7 +45,6 @@ namespace littlenet.Connection.Implementations
             {
                 while(true)
                 {
-
                     int packetId = this._dataStream.ReadInt();
 
                     if (_packets.ContainsKey(packetId))
