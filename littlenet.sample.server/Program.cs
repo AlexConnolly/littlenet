@@ -1,36 +1,61 @@
 ﻿using littlenet.Connection.Interfaces;
 using littlenet.Packets.Implementations;
+using littlenet.rooms;
 using littlenet.sample.shared.Packets.ToClient;
 using littlenet.sample.shared.Packets.ToServer;
 using littlenet.Server.Implementations;
 
 var server = new LittlenetTcpServer(9090);
 
-server.OnConnected((connection) =>
+var roomServer = new RoomServer(server);
+
+roomServer.AddRoom(new Room("Default"));
+roomServer.AddRoom(new Room("Chat"));
+
+roomServer.GetRoom("Default").OnUserJoinedRoom((user) =>
 {
-    connection.OnReceived<LoginPacket>((packet) =>
+    user.Connection.OnReceived<LoginPacket>((packet) =>
     {
         string username = packet.Username;
 
-        if(string.IsNullOrEmpty(username))
+        if (string.IsNullOrEmpty(username))
         {
             username = "NewUser" + Random.Shared.Next(1000, 9999);
         }
 
-        connection.OnReceived<SendChatMessagePacket>((chatMessage) =>
-        {
-            server.Broadcast(new ChatMessagePacket()
-            {
-                Message = chatMessage.Message,
-                Sender = username
-            });
-        });
+        roomServer.GetRoom("Chat").JoinRoom(user);
+    });
+});
 
+roomServer.GetRoom("Chat").OnUserJoinedRoom((user) =>
+{
+    user.Connection.OnReceived<SendChatMessagePacket>((chatMessage) =>
+    {
         server.Broadcast(new ChatMessagePacket()
         {
-            Message = "User " + username + " has joined the chat!",
-            Sender = ""
+            Message = chatMessage.Message,
+            Sender = user.Id
         });
+    });
+
+    var room = roomServer.GetRoom("Chat");
+
+    room.Broadcast(new ChatMessagePacket()
+    {
+        Message = $"User {user.Id} joined the room.",
+        Sender = "Server"
+    });
+});
+
+roomServer.GetRoom("Chat").OnUserLeftRoom((user) =>
+{
+
+    var room = roomServer.GetRoom("Chat");
+
+    room.Broadcast(new ChatMessagePacket()
+    {
+        Message = $"User {user.Id} left the room.",
+        Sender = "Server"
     });
 });
 

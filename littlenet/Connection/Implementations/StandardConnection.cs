@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace littlenet.Connection.Implementations
 {
+
     public class StandardConnection : IConnection
     {
         private class MappedPacket
@@ -28,6 +29,8 @@ namespace littlenet.Connection.Implementations
         private string connectionId = Guid.NewGuid().ToString();
         public string ConnectionId => connectionId;
 
+        private bool read = false;
+
         public static StandardConnection Connect(string ipAddress, int port)
         {
             var tcpClient = new TcpClient();
@@ -43,24 +46,40 @@ namespace littlenet.Connection.Implementations
 
             this._readthread = new Thread(() =>
             {
-                while(true)
+                read = true;
+
+                while(read)
                 {
-                    int packetId = this._dataStream.ReadInt();
-
-                    if (_packets.ContainsKey(packetId))
+                    try
                     {
-                        IPacket instance = (IPacket)Activator.CreateInstance(_packets[packetId].Packet);
 
-                        instance.Read(dataStream);
+                        int packetId = this._dataStream.ReadInt();
 
-                        foreach (var callback in _packets[packetId].Callbacks)
+                        if (_packets.ContainsKey(packetId))
                         {
-                            callback(instance);
+                            IPacket instance = (IPacket)Activator.CreateInstance(_packets[packetId].Packet);
+
+                            instance.Read(dataStream);
+
+                            foreach (var callback in _packets[packetId].Callbacks)
+                            {
+                                callback(instance);
+                            }
                         }
-                    } else
+                        else
+                        {
+                            if (_unsupportedPacketCallback != null)
+                                _unsupportedPacketCallback();
+                        }
+                    } catch
                     {
-                        if (_unsupportedPacketCallback != null)
-                            _unsupportedPacketCallback();
+                        // Disconnected
+                        foreach(var disconnect in _onDisconnectedEvents)
+                        {
+                            disconnect();
+                        }
+
+                        read = false;
                     }
                 }
             });
@@ -107,13 +126,37 @@ namespace littlenet.Connection.Implementations
 
         public void Send(IPacket packet)
         {
-            this._dataStream.WriteInt(packet.PacketType);
-            packet.Write(this._dataStream);
+            try
+            {
+                this._dataStream.WriteInt(packet.PacketType);
+                packet.Write(this._dataStream);
+            } catch
+            {
+                read = false;
+
+                // Disconnected
+                foreach (var disconnect in _onDisconnectedEvents)
+                {
+                    disconnect();
+                }
+            }
         }
 
         public void OnUnsupportedPacket(Action callback)
         {
             this._unsupportedPacketCallback = callback;
+        }
+
+        public void ClearPacketBindings()
+        {
+            this._packets.Clear();
+        }
+
+        private List<Action> _onDisconnectedEvents = new List<Action>();
+
+        public void OnDisconnected(Action callback)
+        {
+            _onDisconnectedEvents.Add(callback);
         }
     }
 }

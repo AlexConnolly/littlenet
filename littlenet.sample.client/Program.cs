@@ -9,7 +9,7 @@ var connection = StandardConnection.Connect("127.0.0.1", 9090);
 
 connection.OnReceived<ChatMessagePacket>((packet) =>
 {
-    Console.Write(packet.Message);
+    Console.WriteLine(packet.Message);
 });
 
 connection.Send(new LoginPacket() { Username = System.Environment.MachineName });

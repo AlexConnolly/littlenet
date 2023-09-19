@@ -1,71 +1,161 @@
-﻿using littlenet.Connection.Interfaces;
+﻿using littlenet.Connection.Implementations;
+using littlenet.Connection.Interfaces;
+using littlenet.Packets.Interfaces;
+using System.Diagnostics;
+using System.Net.WebSockets;
 
 namespace littlenet.rooms
 {
     public interface IRoom
     {
-        void OnConnectionJoinedRoom(Action<IConnection> callback);
-        void OnConnectionLeftRoom(Action<IConnection> callback);
+        void OnUserJoinedRoom(Action<RoomUser> callback);
+        void OnUserLeftRoom(Action<RoomUser> callback);
 
-        void JoinRoom(IConnection connection);
-        void LeaveRoom(IConnection connection);
+        void JoinRoom(RoomUser connection);
+        void LeaveRoom(RoomUser connection);
 
-        public IEnumerable<IConnection> Connections { get; }
+        public IEnumerable<RoomUser> Users { get; }
+
+        public RoomConfiguration Configuration { get; }
+
+        public void Broadcast(IPacket packet);
     }
 
     public class Room : IRoom
     {
-        private List<IConnection> _connections = new List<IConnection>();
+        private class MappedPacket
+        {
+            public Type Packet { get; set; }
+            public List<Action<IPacket, RoomUser>> Callbacks { get; set; }
+        }
 
-        private List<Action<IConnection>> _leaveEvents = new List<Action<IConnection>>();
-        private List<Action<IConnection>> _joinEvents = new List<Action<IConnection>>();
+        private List<RoomUser> _users = new List<RoomUser>();
 
-        public IEnumerable<littlenet.Connection.Interfaces.IConnection> Connections
+        private List<Action<RoomUser>> _leaveEvents = new List<Action<RoomUser>>();
+        private List<Action<RoomUser>> _joinEvents = new List<Action<RoomUser>>();
+
+        public IEnumerable<RoomUser> Users
         {
             get
             {
-                return _connections;
+                return _users;
             }
         }
 
-        public void JoinRoom(IConnection connection)
-        {
-            _connections.Add(connection);
+        public RoomConfiguration Configuration { get; private set; }
 
-            ConnectionJoinedRoom(connection);
+        public Room(string name)
+        {
+            this.Configuration = new RoomConfiguration() { Name = name };
         }
 
-        public void LeaveRoom(IConnection connection)
+        public void JoinRoom(RoomUser user)
         {
-            _connections.Remove(connection);
+            _users.Add(user);
 
-            ConnectionLeftRoom(connection);
+            if(user.Room != null)
+            {
+                // Leave current room
+                user.Room.LeaveRoom(user);
+            }
+
+            user.Connection.OnDisconnected(() =>
+            {
+                LeaveRoom(user);
+            });
+
+            UserJoinedRoom(user);
         }
 
-        private void ConnectionJoinedRoom(IConnection connection)
+        public void LeaveRoom(RoomUser user)
+        {
+            _users.Remove(user);
+
+            user.Room = null;
+
+            // Unbinding any packet bindigns that were already there
+            user.Connection.ClearPacketBindings();
+
+            UserLeftRoom(user);
+        }
+
+        private void UserJoinedRoom(RoomUser user)
         {
             foreach(var joinEvent in _joinEvents)
             {
-                joinEvent(connection);
+                joinEvent(user);
             }
         }
 
-        private void ConnectionLeftRoom(IConnection connection)
+        private void UserLeftRoom(RoomUser user)
         {
             foreach(var leaveEvent in  _leaveEvents)
             {
-                leaveEvent(connection);
+                leaveEvent(user);
             }
         }
 
-        public void OnConnectionJoinedRoom(Action<IConnection> callback)
+        public void OnUserJoinedRoom(Action<RoomUser> user)
         {
-            _leaveEvents.Add(callback);
+            _joinEvents.Add(user);
         }
 
-        public void OnConnectionLeftRoom(Action<IConnection> callback)
+        public void OnUserLeftRoom(Action<RoomUser> user)
         {
-            _joinEvents.Add(callback);
+            _leaveEvents.Add(user);
+        }
+
+        private int GetPacketTypeFor(Type type)
+        {
+            if (!typeof(IPacket).IsAssignableFrom(type))
+                throw new ArgumentException("Type must be an IPacket");
+
+            IPacket instance = (IPacket)Activator.CreateInstance(type);
+
+            return instance.PacketType;
+        }
+
+
+        private Dictionary<int, MappedPacket> _packets = new Dictionary<int, MappedPacket>();
+
+        public IRoom OnPacketReceived<T>(Action<T, RoomUser> callback) where T : IPacket
+        {
+            Type typeOfT = typeof(T);
+
+            int packetTypeId = GetPacketTypeFor(typeOfT);
+
+            if (!_packets.TryGetValue(packetTypeId, out MappedPacket mappedPacket))
+            {
+                mappedPacket = new MappedPacket
+                {
+                    Packet = typeOfT,
+                    Callbacks = new List<Action<IPacket, RoomUser>>()
+                };
+
+                _packets[packetTypeId] = mappedPacket;
+            }
+
+            // Cast the Action<T> to Action<IPacket> and add to the callback list
+            Action<IPacket, RoomUser> generalCallback = (IPacket packet, RoomUser user) =>
+            {
+                if(user.Room == this)
+                    callback((T)packet, user);
+                {
+                    // Todo: Cleanup this so we remove the binding and not have memory leaks
+                }
+            };
+
+            mappedPacket.Callbacks.Add(generalCallback);
+
+            return this;
+        }
+
+        public void Broadcast(IPacket packet)
+        {
+            foreach(var user in _users)
+            {
+                user.Connection.Send(packet);
+            }
         }
     }
 }

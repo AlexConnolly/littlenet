@@ -15,5 +15,9 @@ namespace littlenet.Connection.Interfaces
         public void OnUnsupportedPacket(Action callback);
 
         public string ConnectionId { get; }
+
+        public void ClearPacketBindings();
+
+        public void OnDisconnected(Action callback);
     }
 }
