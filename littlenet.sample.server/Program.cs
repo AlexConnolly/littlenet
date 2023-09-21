@@ -9,10 +9,10 @@ var server = new LittlenetTcpServer(9090);
 
 var roomServer = new RoomServer(server);
 
-roomServer.AddRoom(new Room("Default"));
-roomServer.AddRoom(new Room("Chat"));
+var defaultRoom = roomServer.AddRoom(new Room("Default"));
+var chatRoom = roomServer.AddRoom(new Room("Chat"));
 
-roomServer.GetRoom("Default").OnUserJoinedRoom((user) =>
+defaultRoom.OnUserJoinedRoom((user) =>
 {
     user.Connection.OnReceived<LoginPacket>((packet) =>
     {
@@ -23,11 +23,11 @@ roomServer.GetRoom("Default").OnUserJoinedRoom((user) =>
             username = "NewUser" + Random.Shared.Next(1000, 9999);
         }
 
-        roomServer.GetRoom("Chat").JoinRoom(user);
+        chatRoom.JoinRoom(user);
     });
 });
 
-roomServer.GetRoom("Chat").OnUserJoinedRoom((user) =>
+chatRoom.OnUserJoinedRoom((user) =>
 {
     user.Connection.OnReceived<SendChatMessagePacket>((chatMessage) =>
     {
@@ -38,21 +38,16 @@ roomServer.GetRoom("Chat").OnUserJoinedRoom((user) =>
         });
     });
 
-    var room = roomServer.GetRoom("Chat");
-
-    room.Broadcast(new ChatMessagePacket()
+    chatRoom.Broadcast(new ChatMessagePacket()
     {
         Message = $"User {user.Id} joined the room.",
         Sender = "Server"
     });
 });
 
-roomServer.GetRoom("Chat").OnUserLeftRoom((user) =>
+chatRoom.OnUserLeftRoom((user) =>
 {
-
-    var room = roomServer.GetRoom("Chat");
-
-    room.Broadcast(new ChatMessagePacket()
+    chatRoom.Broadcast(new ChatMessagePacket()
     {
         Message = $"User {user.Id} left the room.",
         Sender = "Server"

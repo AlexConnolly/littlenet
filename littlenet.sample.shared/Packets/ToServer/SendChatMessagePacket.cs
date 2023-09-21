@@ -1,7 +1,7 @@
 ﻿using littlenet.Packets.Interfaces;
 using littlenet.Stream.Interfaces;
 
-namespace littlenet.sample.shared.Packets.ToServer
+namespace littlenet.shared.Packets.ToServer
 {
     public class SendChatMessagePacket : IPacket
     {

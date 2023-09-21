@@ -8,24 +8,18 @@ using System.Threading.Tasks;
 
 namespace littlenet.shared.Packets.ToClient
 {
-    public class ChatMessagePacket : IPacket
+    public class WelcomeMessagePacket : IPacket
     {
-        public int PacketType => 202;
-
-        public string Message { get; set; }
-
-        public string Sender { get; set; }
+        public int PacketType => 1002;
 
         public void Read(IReadableStream stream)
         {
-            Message = stream.ReadString();
-            Sender = stream.ReadString();
+            throw new NotImplementedException();
         }
 
         public void Write(IWriteableStream stream)
         {
-            stream.WriteString(this.Message);
-            stream.WriteString(this.Sender);
+            throw new NotImplementedException();
         }
     }
 }

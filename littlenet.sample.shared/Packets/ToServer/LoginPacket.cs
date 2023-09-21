@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace littlenet.sample.shared.Packets.ToServer
+namespace littlenet.shared.Packets.ToServer
 {
     public class LoginPacket : IPacket
     {
