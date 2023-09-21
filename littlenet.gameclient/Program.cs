@@ -1,7 +1,7 @@
 ﻿
 using littlenet.Connection.Implementations;
-using littlenet.sample.shared.Packets.ToClient;
-using littlenet.sample.shared.Packets.ToServer;
+using littlenet.shared.Packets.ToClient;
+using littlenet.shared.Packets.ToServer.Login;
 using System;
 using System.Threading;
 
@@ -13,12 +13,12 @@ var thread = new Thread(() =>
 
     var connection = StandardConnection.Connect("127.0.0.1", 9090);
 
-    connection.OnReceived<ChatMessagePacket>((packet) =>
+    connection.OnReceived<WelcomeMessagePacket>((packet) =>
     {
         game.ClearColor = new Microsoft.Xna.Framework.Color(Random.Shared.Next(1, 255), Random.Shared.Next(1, 255), Random.Shared.Next(1, 255));
     });
 
-    connection.Send(new LoginPacket() { Username = System.Environment.MachineName });
+    connection.Send(new LoginPacket() { Token = "" });
 
     while(true)
     {

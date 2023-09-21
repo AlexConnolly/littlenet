@@ -5,15 +5,13 @@ VisualStudioVersion = 17.5.33502.453
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "littlenet", "littlenet.csproj", "{CB4C5077-1332-430C-905D-5AABCBA605A6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "littlenet.sample.shared", "..\littlenet.sample.shared\littlenet.sample.shared.csproj", "{4A23DF1D-4BAB-4AA4-B30A-91D52FDDC8BB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "littlenet.shared", "..\littlenet.sample.shared\littlenet.shared.csproj", "{4A23DF1D-4BAB-4AA4-B30A-91D52FDDC8BB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "littlenet.sample.client", "..\littlenet.sample.client\littlenet.sample.client.csproj", "{0D19E9D1-F6F0-4DF8-9045-99CEB8E63004}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "littlenet.sample.server", "..\littlenet.sample.server\littlenet.sample.server.csproj", "{F36F6BD9-68A9-4EB1-B359-EF8B4D4BA08C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "littlenet.server", "..\littlenet.sample.server\littlenet.server.csproj", "{F36F6BD9-68A9-4EB1-B359-EF8B4D4BA08C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "littlenet.rooms", "..\littlenet.rooms\littlenet.rooms.csproj", "{C6DFA280-B8AA-4680-881D-E83FA2153329}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littlenet.gameclient", "..\littlenet.gameclient\littlenet.gameclient.csproj", "{E0AAA7F9-E030-4439-934F-3C2FBC130E47}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "littlenet.gameclient", "..\littlenet.gameclient\littlenet.gameclient.csproj", "{E0AAA7F9-E030-4439-934F-3C2FBC130E47}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +27,6 @@ Global
 		{4A23DF1D-4BAB-4AA4-B30A-91D52FDDC8BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4A23DF1D-4BAB-4AA4-B30A-91D52FDDC8BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4A23DF1D-4BAB-4AA4-B30A-91D52FDDC8BB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0D19E9D1-F6F0-4DF8-9045-99CEB8E63004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0D19E9D1-F6F0-4DF8-9045-99CEB8E63004}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0D19E9D1-F6F0-4DF8-9045-99CEB8E63004}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0D19E9D1-F6F0-4DF8-9045-99CEB8E63004}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F36F6BD9-68A9-4EB1-B359-EF8B4D4BA08C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F36F6BD9-68A9-4EB1-B359-EF8B4D4BA08C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F36F6BD9-68A9-4EB1-B359-EF8B4D4BA08C}.Release|Any CPU.ActiveCfg = Release|Any CPU

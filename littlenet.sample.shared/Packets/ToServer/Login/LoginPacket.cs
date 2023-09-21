@@ -6,22 +6,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace littlenet.shared.Packets.ToServer
+namespace littlenet.shared.Packets.ToServer.Login
 {
     public class LoginPacket : IPacket
     {
-        public int PacketType => 101;
+        public int PacketType => 20001;
 
-        public string Username { get; set; }
+        public string Token { get; set; }
 
         public void Read(IReadableStream stream)
         {
-            Username = stream.ReadString();
+            Token = stream.ReadString();
         }
 
         public void Write(IWriteableStream stream)
         {
-            stream.WriteString(this.Username);
+            stream.WriteString(Token);
         }
     }
 }

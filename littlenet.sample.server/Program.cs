@@ -1,57 +1,40 @@
-﻿using littlenet.Connection.Interfaces;
-using littlenet.Packets.Implementations;
-using littlenet.rooms;
-using littlenet.sample.shared.Packets.ToClient;
-using littlenet.sample.shared.Packets.ToServer;
+﻿using littlenet.rooms;
 using littlenet.Server.Implementations;
+using littlenet.shared.Packets.ToClient;
+using littlenet.shared.Packets.ToServer.Login;
 
 var server = new LittlenetTcpServer(9090);
 
 var roomServer = new RoomServer(server);
 
 var defaultRoom = roomServer.AddRoom(new Room("Default"));
-var chatRoom = roomServer.AddRoom(new Room("Chat"));
+var gameRoom = roomServer.AddRoom(new Room("Game"));
+var waitingRoom = roomServer.AddRoom(new Room("Waiting"));
 
 defaultRoom.OnUserJoinedRoom((user) =>
 {
     user.Connection.OnReceived<LoginPacket>((packet) =>
     {
-        string username = packet.Username;
+        bool gameFull = gameRoom.Users.Count() == 2;
 
-        if (string.IsNullOrEmpty(username))
+        if(gameFull)
         {
-            username = "NewUser" + Random.Shared.Next(1000, 9999);
+            waitingRoom.JoinRoom(user);
+        } else
+        {
+            gameRoom.JoinRoom(user);
         }
-
-        chatRoom.JoinRoom(user);
     });
 });
 
-chatRoom.OnUserJoinedRoom((user) =>
+waitingRoom.OnUserJoinedRoom((user) =>
 {
-    user.Connection.OnReceived<SendChatMessagePacket>((chatMessage) =>
-    {
-        server.Broadcast(new ChatMessagePacket()
-        {
-            Message = chatMessage.Message,
-            Sender = user.Id
-        });
-    });
 
-    chatRoom.Broadcast(new ChatMessagePacket()
-    {
-        Message = $"User {user.Id} joined the room.",
-        Sender = "Server"
-    });
 });
 
-chatRoom.OnUserLeftRoom((user) =>
+gameRoom.OnUserJoinedRoom((user) =>
 {
-    chatRoom.Broadcast(new ChatMessagePacket()
-    {
-        Message = $"User {user.Id} left the room.",
-        Sender = "Server"
-    });
+    user.Connection.Send(new WelcomeMessagePacket());
 });
 
 await server.Start(new littlenet.Server.Models.LittlenetServerConfiguration());
