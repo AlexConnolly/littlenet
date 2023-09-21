@@ -13,13 +13,6 @@ roomServer.GetRoom("Default").OnUserJoinedRoom((user) =>
 {
     user.Connection.OnReceived<LoginPacket>((packet) =>
     {
-        string username = packet.Username;
-
-        if (string.IsNullOrEmpty(username))
-        {
-            username = "NewUser" + Random.Shared.Next(1000, 9999);
-        }
-
         roomServer.GetRoom("Chat").JoinRoom(user);
     });
 });
