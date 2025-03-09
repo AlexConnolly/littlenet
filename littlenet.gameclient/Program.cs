@@ -18,6 +18,12 @@ var thread = new Thread(() =>
         game.ClearColor = new Microsoft.Xna.Framework.Color(Random.Shared.Next(1, 255), Random.Shared.Next(1, 255), Random.Shared.Next(1, 255));
     });
 
+    connection.OnReceived<WaitingRoomPacket>((packet) =>
+    {
+        // We are in the waiting room, display the amount of users waiting 
+         
+    });
+
     connection.Send(new LoginPacket() { Token = "" });
 
     while(true)

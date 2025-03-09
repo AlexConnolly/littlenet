@@ -29,12 +29,42 @@ defaultRoom.OnUserJoinedRoom((user) =>
 
 waitingRoom.OnUserJoinedRoom((user) =>
 {
+    var usersInRoomPacket = new WaitingRoomPacket() { PlayerCount = waitingRoom.Users.Count() };
 
+    foreach(var con in waitingRoom.Users)
+    {
+        con.Connection.Send(usersInRoomPacket);
+    }
+});
+
+waitingRoom.OnUserLeftRoom((user) =>
+{
+    var usersInRoomPacket = new WaitingRoomPacket() { PlayerCount = waitingRoom.Users.Count() };
+
+    foreach (var con in waitingRoom.Users)
+    {
+        if (con == user)
+            continue;
+
+        con.Connection.Send(usersInRoomPacket);
+    }
 });
 
 gameRoom.OnUserJoinedRoom((user) =>
 {
     user.Connection.Send(new WelcomeMessagePacket());
+});
+
+gameRoom.OnUserLeftRoom((user) =>
+{
+    bool playersInWaitingRoom = waitingRoom.Users.Count() > 0;
+
+    if(playersInWaitingRoom)
+    {
+        var firstPlayers = waitingRoom.Users.First();
+
+        gameRoom.JoinRoom(firstPlayers);
+    }
 });
 
 await server.Start(new littlenet.Server.Models.LittlenetServerConfiguration());
