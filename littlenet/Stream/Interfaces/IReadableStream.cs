@@ -10,5 +10,6 @@ namespace littlenet.Stream.Interfaces
     {
         public int ReadInt();
         public string ReadString();
+        public float ReadFloat();
     }
 }

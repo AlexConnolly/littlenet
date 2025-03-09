@@ -16,6 +16,15 @@ namespace littlenet.Stream.Implementations
             this._stream = stream;
         }
 
+        public float ReadFloat()
+        {
+            byte[] buffer = new byte[4];
+
+            _stream.Read(buffer, 0, 4);
+
+            return BitConverter.ToSingle(buffer, 0);
+        }
+
         public int ReadInt()
         {
             byte[] buffer = new byte[4];
@@ -37,6 +46,15 @@ namespace littlenet.Stream.Implementations
             _stream.Read(buffer, 0, length);
 
             return Encoding.UTF8.GetString(buffer);
+        }
+
+        public void WriteFloat(float value)
+        {
+            byte[] floatBytes = BitConverter.GetBytes(value);
+
+            byte[] result = floatBytes;
+
+            _stream.Write(result, 0, result.Length);
         }
 
         public void WriteInt(int value)

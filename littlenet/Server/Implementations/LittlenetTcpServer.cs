@@ -30,11 +30,14 @@ namespace littlenet.Server.Implementations
             this._port = port;
         }
 
-        public void Broadcast(IPacket packet)
+        public void Broadcast(IPacket packet, Func<IConnection, bool> exclude = null)
         {
-            foreach(var connection in connections)
+            foreach (var connection in connections)
             {
-                connection.Send(packet);
+                if (exclude == null || !exclude(connection))
+                {
+                    connection.Send(packet);
+                }
             }
         }
 

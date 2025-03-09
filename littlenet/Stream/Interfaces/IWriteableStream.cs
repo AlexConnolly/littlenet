@@ -10,5 +10,6 @@ namespace littlenet.Stream.Interfaces
     {
         public void WriteInt(int value);
         public void WriteString(string value);
+        public void WriteFloat(float value);
     }
 }

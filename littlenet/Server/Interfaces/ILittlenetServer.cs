@@ -16,6 +16,6 @@ namespace littlenet.Server.Interfaces
 
         void OnConnected(Action<IConnection> callback);
 
-        void Broadcast(IPacket packet);
+        public void Broadcast(IPacket packet, Func<IConnection, bool> exclude = null);
     }
 }
