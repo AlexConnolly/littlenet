@@ -1,9 +1,5 @@
 ﻿using littlenet.Stream.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace littlenet.Stream.Implementations
 {
@@ -22,6 +18,11 @@ namespace littlenet.Stream.Implementations
 
             _stream.Read(buffer, 0, 4);
 
+            if(BitConverter.IsLittleEndian)
+            {
+                return BitConverter.ToSingle(buffer.Reverse().ToArray(), 0);
+            }
+
             return BitConverter.ToSingle(buffer, 0);
         }
 
@@ -29,27 +30,71 @@ namespace littlenet.Stream.Implementations
         {
             byte[] buffer = new byte[4];
 
+            if(BitConverter.IsLittleEndian)
+            {
+                _stream.Read(buffer, 0, 4);
+
+                return BitConverter.ToInt32(buffer.Reverse().ToArray(), 0);
+            }
+
             _stream.Read(buffer, 0, 4);
 
             return BitConverter.ToInt32(buffer, 0);
         }
 
-        public string ReadString()
+        public T ReadObject<T>() where T : IStreamableObject
         {
-            int length = ReadInt();
+            T obj = Activator.CreateInstance<T>();
 
-            if (length <= 0)
-                return "";
+            obj.ReadFromStream(this);
 
-            byte[] buffer = new byte[length];
-
-            _stream.Read(buffer, 0, length);
-
-            return Encoding.UTF8.GetString(buffer);
+            return obj;
         }
+
+        public IEnumerable<T> ReadObjects<T>() where T : IStreamableObject
+        {
+            int amount = ReadInt();
+
+            List<T> result = new List<T>();
+
+            for (int i = 0; i < amount; i++)
+            {
+                T obj = ReadObject<T>();
+
+                result.Add(obj);
+            }
+
+            return result;
+        }
+
+public string ReadString()
+{
+    int length = ReadInt();
+    if (length <= 0)
+        return "";
+
+    byte[] buffer = new byte[length];
+    int totalRead = 0;
+
+    while (totalRead < length)
+    {
+        int bytesRead = _stream.Read(buffer, totalRead, length - totalRead);
+        if (bytesRead == 0)
+            throw new IOException("Stream closed before reading enough data.");
+        
+        totalRead += bytesRead;
+    }
+
+    return Encoding.UTF8.GetString(buffer);
+}
 
         public void WriteFloat(float value)
         {
+            if(BitConverter.IsLittleEndian)
+            {
+                value = BitConverter.ToSingle(BitConverter.GetBytes(value).Reverse().ToArray(), 0);
+            }
+
             byte[] floatBytes = BitConverter.GetBytes(value);
 
             byte[] result = floatBytes;
@@ -59,11 +104,34 @@ namespace littlenet.Stream.Implementations
 
         public void WriteInt(int value)
         {
+            // Do we need to check for endianness here?
+            if(BitConverter.IsLittleEndian)
+            {
+                value = System.Net.IPAddress.HostToNetworkOrder(value);
+            }
+
             byte[] intBytes = BitConverter.GetBytes(value);
 
             byte[] result = intBytes;
 
             _stream.Write(result, 0, result.Length);
+        }
+
+        public void WriteObject<T>(T obj) where T : IStreamableObject
+        {
+            obj.WriteToStream(this);
+        }
+
+        public void WriteObjects<T>(IEnumerable<T> objs) where T : IStreamableObject
+        {
+            var objts = objs.ToList();
+
+            WriteInt(objts.Count);
+
+            foreach(var obj in objts)
+            {
+                WriteObject(obj);
+            }
         }
 
         public void WriteString(string value)

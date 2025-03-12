@@ -11,5 +11,7 @@ namespace littlenet.Stream.Interfaces
         public int ReadInt();
         public string ReadString();
         public float ReadFloat();
+        public T ReadObject<T>() where T : IStreamableObject;
+        public IEnumerable<T> ReadObjects<T>() where T : IStreamableObject;
     }
 }

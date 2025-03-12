@@ -3,6 +3,7 @@ using littlenet.Packets.Interfaces;
 using littlenet.Stream.Implementations;
 using littlenet.Stream.Interfaces;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -22,6 +23,7 @@ namespace littlenet.Connection.Implementations
 
         private IDataStream _dataStream;
         private Thread _readthread;
+        private Thread _writeThread;
 
         private Dictionary<int, MappedPacket> _packets = new Dictionary<int, MappedPacket>();
         private Action _unsupportedPacketCallback;
@@ -30,6 +32,9 @@ namespace littlenet.Connection.Implementations
         public string ConnectionId => connectionId;
 
         private bool read = false;
+
+        // Packets to be written
+        private BlockingCollection<IPacket> _writeQueue = new BlockingCollection<IPacket>();
 
         public static StandardConnection Connect(string ipAddress, int port)
         {
@@ -44,6 +49,25 @@ namespace littlenet.Connection.Implementations
         {
             this._dataStream = dataStream;
 
+            this._writeThread = new Thread(() =>
+            {
+                try
+                {
+                    foreach (var packet in _writeQueue.GetConsumingEnumerable()) // Blocks when empty
+                    {
+                        this._dataStream.WriteInt(packet.PacketType);
+                        packet.Write(this._dataStream);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    foreach (var disconnect in _onDisconnectedEvents)
+                    {
+                        disconnect();
+                    }
+                }
+            });
+
             this._readthread = new Thread(() =>
             {
                 read = true;
@@ -54,6 +78,8 @@ namespace littlenet.Connection.Implementations
                     {
 
                         int packetId = this._dataStream.ReadInt();
+
+                        Console.WriteLine("Received packet ID " + packetId);
 
                         if (_packets.ContainsKey(packetId))
                         {
@@ -71,7 +97,7 @@ namespace littlenet.Connection.Implementations
                             if (_unsupportedPacketCallback != null)
                                 _unsupportedPacketCallback();
                         }
-                    } catch
+                    } catch (Exception ex)
                     {
                         // Disconnected
                         foreach(var disconnect in _onDisconnectedEvents)
@@ -112,6 +138,11 @@ namespace littlenet.Connection.Implementations
                 // Only start reading when we have bound a packet
                 this._readthread.Start();
             }
+
+            if(this._writeThread.ThreadState != ThreadState.Running)
+            {
+                this._writeThread.Start();
+            }
         }
 
         private int GetPacketTypeFor(Type type)
@@ -126,20 +157,7 @@ namespace littlenet.Connection.Implementations
 
         public void Send(IPacket packet)
         {
-            try
-            {
-                this._dataStream.WriteInt(packet.PacketType);
-                packet.Write(this._dataStream);
-            } catch
-            {
-                read = false;
-
-                // Disconnected
-                foreach (var disconnect in _onDisconnectedEvents)
-                {
-                    disconnect();
-                }
-            }
+            _writeQueue.Add(packet);
         }
 
         public void OnUnsupportedPacket(Action callback)

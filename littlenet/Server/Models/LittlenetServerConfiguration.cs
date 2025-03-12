@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace littlenet.Server.Models
+﻿namespace littlenet.Server.Models
 {
     public enum MalformedMessageStrategy
     {
