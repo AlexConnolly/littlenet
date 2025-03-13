@@ -51,27 +51,28 @@ namespace littlenet.Connection.Implementations
 
             this._writeThread = new Thread(() =>
             {
-                try
+                while(read)
                 {
-                    foreach (var packet in _writeQueue.GetConsumingEnumerable()) // Blocks when empty
+                    try
                     {
-                        this._dataStream.WriteInt(packet.PacketType);
-                        packet.Write(this._dataStream);
+                        foreach (var packet in _writeQueue.GetConsumingEnumerable()) // Blocks when empty
+                        {
+                            this._dataStream.WriteInt(packet.PacketType);
+                            packet.Write(this._dataStream);
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    foreach (var disconnect in _onDisconnectedEvents)
+                    catch (Exception ex)
                     {
-                        disconnect();
+                        foreach (var disconnect in _onDisconnectedEvents)
+                        {
+                            disconnect();
+                        }
                     }
                 }
             });
 
             this._readthread = new Thread(() =>
             {
-                read = true;
-
                 while(read)
                 {
                     try
@@ -109,6 +110,10 @@ namespace littlenet.Connection.Implementations
                     }
                 }
             });
+
+            read = true;
+
+            this._writeThread.Start();
         }
 
         public void OnReceived<T>(Action<T> callback) where T : IPacket
@@ -138,11 +143,6 @@ namespace littlenet.Connection.Implementations
                 // Only start reading when we have bound a packet
                 this._readthread.Start();
             }
-
-            if(this._writeThread.ThreadState != ThreadState.Running)
-            {
-                this._writeThread.Start();
-            }
         }
 
         private int GetPacketTypeFor(Type type)
@@ -157,7 +157,9 @@ namespace littlenet.Connection.Implementations
 
         public void Send(IPacket packet)
         {
-            _writeQueue.Add(packet);
+            // Cheesy but yeah you can't send a packet if you aren't connected
+            if(read)
+                _writeQueue.Add(packet);
         }
 
         public void OnUnsupportedPacket(Action callback)
@@ -175,6 +177,20 @@ namespace littlenet.Connection.Implementations
         public void OnDisconnected(Action callback)
         {
             _onDisconnectedEvents.Add(callback);
+        }
+
+        public void Disconnect()
+        {
+            read = false;
+
+            _dataStream.Close();
+
+            _writeQueue.CompleteAdding();
+
+            foreach (var disconnect in _onDisconnectedEvents)
+            {
+                disconnect();
+            }
         }
     }
 }

@@ -19,5 +19,6 @@ namespace littlenet.Connection.Interfaces
         public void ClearPacketBindings();
 
         public void OnDisconnected(Action callback);
+        public void Disconnect();
     }
 }

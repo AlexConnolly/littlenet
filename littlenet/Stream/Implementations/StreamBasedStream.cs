@@ -12,6 +12,11 @@ namespace littlenet.Stream.Implementations
             this._stream = stream;
         }
 
+        public void Close()
+        {
+            _stream.Close();
+        }
+
         public float ReadFloat()
         {
             byte[] buffer = new byte[4];

@@ -8,6 +8,6 @@ namespace littlenet.Stream.Interfaces
 {
     public interface IDataStream : IReadableStream, IWriteableStream
     {
-
+        public void Close();
     }
 }
