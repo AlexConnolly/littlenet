@@ -33,6 +33,8 @@ namespace littlenet.Connection.Implementations
 
         private bool read = false;
 
+        private bool hasDisconnected = false;
+
         // Packets to be written
         private BlockingCollection<IPacket> _writeQueue = new BlockingCollection<IPacket>();
 
@@ -63,10 +65,7 @@ namespace littlenet.Connection.Implementations
                     }
                     catch (Exception ex)
                     {
-                        foreach (var disconnect in _onDisconnectedEvents)
-                        {
-                            disconnect();
-                        }
+                        Disconnect();
                     }
                 }
             });
@@ -77,7 +76,6 @@ namespace littlenet.Connection.Implementations
                 {
                     try
                     {
-
                         int packetId = this._dataStream.ReadInt();
 
                         Console.WriteLine("Received packet ID " + packetId);
@@ -100,13 +98,7 @@ namespace littlenet.Connection.Implementations
                         }
                     } catch (Exception ex)
                     {
-                        // Disconnected
-                        foreach(var disconnect in _onDisconnectedEvents)
-                        {
-                            disconnect();
-                        }
-
-                        read = false;
+                        Disconnect();
                     }
                 }
             });
@@ -181,15 +173,20 @@ namespace littlenet.Connection.Implementations
 
         public void Disconnect()
         {
-            read = false;
+            if (!hasDisconnected)
+            { 
 
-            _dataStream.Close();
+                hasDisconnected = true;
+                read = false;
 
-            _writeQueue.CompleteAdding();
+                _dataStream.Close();
 
-            foreach (var disconnect in _onDisconnectedEvents)
-            {
-                disconnect();
+                _writeQueue.CompleteAdding();
+
+                foreach (var disconnect in _onDisconnectedEvents)
+                {
+                    disconnect();
+                }
             }
         }
     }

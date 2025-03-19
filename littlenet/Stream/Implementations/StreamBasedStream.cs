@@ -141,6 +141,11 @@ public string ReadString()
 
         public void WriteString(string value)
         {
+            if(value == null)
+            {
+                value = "";
+            }
+
             WriteInt(value.Length);
             byte[] bytes = System.Text.Encoding.UTF8.GetBytes(value);
 
